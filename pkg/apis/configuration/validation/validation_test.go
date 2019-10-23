@@ -2027,6 +2027,7 @@ func TestRejectPlusResourcesInOSS(t *testing.T) {
 		SlowStart:     "10s",
 		HealthCheck:   &v1alpha1.HealthCheck{},
 		SessionCookie: &v1alpha1.SessionCookie{},
+		Queue:         &v1alpha1.UpstreamQueue{},
 	}
 
 	allErrsPlus := rejectPlusResourcesInOSS(upstream, field.NewPath("upstreams").Index(0), true)
@@ -2046,31 +2047,27 @@ func TestValidateQueue(t *testing.T) {
 	tests := []struct {
 		upstreamQueue *v1alpha1.UpstreamQueue
 		fieldPath     *field.Path
-		isPlus        bool
 		msg           string
 	}{
 		{
 			upstreamQueue: &v1alpha1.UpstreamQueue{Size: 10, Timeout: "10s"},
 			fieldPath:     field.NewPath("queue"),
-			isPlus:        true,
 			msg:           "valid upstream queue with size and timeout",
 		},
 		{
 			upstreamQueue: nil,
 			fieldPath:     field.NewPath("queue"),
-			isPlus:        true,
 			msg:           "upstream queue nil",
 		},
 		{
 			upstreamQueue: nil,
 			fieldPath:     field.NewPath("queue"),
-			isPlus:        false,
 			msg:           "upstream queue nil in OSS",
 		},
 	}
 
 	for _, test := range tests {
-		allErrs := validateQueue(test.upstreamQueue, test.fieldPath, test.isPlus)
+		allErrs := validateQueue(test.upstreamQueue, test.fieldPath)
 		if len(allErrs) != 0 {
 			t.Errorf("validateQueue() returned errors %v for valid input for the case of %s", allErrs, test.msg)
 		}
@@ -2081,31 +2078,22 @@ func TestValidateQueueFails(t *testing.T) {
 	tests := []struct {
 		upstreamQueue *v1alpha1.UpstreamQueue
 		fieldPath     *field.Path
-		isPlus        bool
 		msg           string
 	}{
 		{
 			upstreamQueue: &v1alpha1.UpstreamQueue{Size: -1, Timeout: "10s"},
 			fieldPath:     field.NewPath("queue"),
-			isPlus:        true,
 			msg:           "upstream queue with invalid size",
 		},
 		{
 			upstreamQueue: &v1alpha1.UpstreamQueue{Size: 10, Timeout: "-10"},
 			fieldPath:     field.NewPath("queue"),
-			isPlus:        true,
 			msg:           "upstream queue with invalid timeout",
-		},
-		{
-			upstreamQueue: &v1alpha1.UpstreamQueue{Size: 10, Timeout: "10s"},
-			fieldPath:     field.NewPath("queue"),
-			isPlus:        false,
-			msg:           "upstream queue with valid size and timeout in OSS",
 		},
 	}
 
 	for _, test := range tests {
-		allErrs := validateQueue(test.upstreamQueue, test.fieldPath, test.isPlus)
+		allErrs := validateQueue(test.upstreamQueue, test.fieldPath)
 		if len(allErrs) == 0 {
 			t.Errorf("validateQueue() returned no errors for invalid input for the case of %s", test.msg)
 		}
