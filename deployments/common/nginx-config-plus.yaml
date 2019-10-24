@@ -1,0 +1,6 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-plus-config
+  namespace: nginx-plus-ingress
+data:

@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-ingress
-  namespace: nginx-ingress
+  name: nginx-plus-ingress
+  namespace: nginx-plus-ingress
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nginx-ingress
+      app: nginx-plus-ingress
   template:
     metadata:
       labels:
-        app: nginx-ingress
-     #annotations:
-       #prometheus.io/scrape: "true"
-       #prometheus.io/port: "9113"
+        app: nginx-plus-ingress
+     annotations:
+       prometheus.io/scrape: "true"
+       prometheus.io/port: "9113"
     spec:
-      serviceAccountName: nginx-ingress
+      serviceAccountName: nginx-plus-ingress
       containers:
-      - image: nginx-plus-ingress:edge
+      - image: nginx-plus-ingress:{{VERSION}}
         imagePullPolicy: Always
         name: nginx-plus-ingress
         ports:
@@ -26,8 +26,8 @@ spec:
           containerPort: 80
         - name: https
           containerPort: 443
-       #- name: prometheus
-         #containerPort: 9113
+       - name: prometheus
+         containerPort: 9113
         securityContext:
           allowPrivilegeEscalation: true
           runAsUser: 101 #nginx
@@ -46,12 +46,15 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         args:
+          - -alsologtostderr
           - -nginx-plus
-          - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
-          - -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
+          - -nginx-configmaps=$(POD_NAMESPACE)/nginx-plus-config
+          - -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret-plus
          #- -v=3 # Enables extensive logging. Useful for troubleshooting.
-         #- -report-ingress-status
-         #- -external-service=nginx-ingress
-         #- -enable-leader-election
-         #- -enable-prometheus-metrics
-         #- -enable-custom-resources
+         - -report-ingress-status
+         - -external-service=nginx-plus-ingress
+         - -enable-leader-election
+         - -enable-prometheus-metrics
+         - -enable-custom-resources
+         - -health-status
+ 
